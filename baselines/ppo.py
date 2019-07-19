@@ -22,9 +22,10 @@ class MineRLEnv(gym.Env):
         args = env_config['args']
         assert 'env_name' in args
 
+        import gym
         import minerl
         self.env = gym.make(args['env_name'])
-        pdb.set_trace()
+
 
         # Mimic POVWithCompass
 
