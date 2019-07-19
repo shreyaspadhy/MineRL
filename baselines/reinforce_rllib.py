@@ -3,7 +3,7 @@ import ray
 from ray.rllib.agents import ppo
 from gym.spaces import Discrete, Box
 from env_wrappers import *
-import logging
+import tensorflow as tf
 # Template of custom environment
 
 
@@ -55,6 +55,7 @@ import logging
 #         """
 
 def main():
+    print(tf.__version__())
     args = {}
     args.logging_level = 20
     args.monitor = True
@@ -64,30 +65,30 @@ def main():
 
     os.makedirs(args.outdir, exist_ok=True)
 
-    log_format = '%(levelname)-8s - %(asctime)s - [%(name)s %(funcName)s %(lineno)d] %(message)s'
-    logging.basicConfig(filename=os.path.join(args.outdir, 'log.txt'),
-                        format=log_format, level=args.logging_level)
+    # log_format = '%(levelname)-8s - %(asctime)s - [%(name)s %(funcName)s %(lineno)d] %(message)s'
+    # logging.basicConfig(filename=os.path.join(args.outdir, 'log.txt'),
+    #                     format=log_format, level=args.logging_level)
 
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(args.logging_level)
-    console_handler.setFormatter(logging.Formatter(log_format))
-    logging.getLogger('').addHandler(console_handler)  # add hander to the root logger
+    # console_handler = logging.StreamHandler()
+    # console_handler.setLevel(args.logging_level)
+    # console_handler.setFormatter(logging.Formatter(log_format))
+    # logging.getLogger('').addHandler(console_handler)  # add hander to the root logger
 
-    logger.info('Output files are saved in {}'.format(args.outdir))
+    # logger.info('Output files are saved in {}'.format(args.outdir))
 
-    utils.log_versions()
+    # utils.log_versions()
 
-    try:
-        _main(args)
-    except:  # noqa
-        logger.exception('execution failed.')
-        raise
+    # try:
+    _main(args)
+    # except:  # noqa
+    #     logger.exception('execution failed.')
+    #     raise
 
 
 def _main(args):
-    logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
+    # logger.info('The first `gym.make(MineRL*)` may take several minutes. Be patient!')
 
-    os.environ['MALMO_MINECRAFT_OUTPUT_LOGDIR'] = args.outdir
+    # os.environ['MALMO_MINECRAFT_OUTPUT_LOGDIR'] = args.outdir
 
     # Set a random seed used in ChainerRL.
 
