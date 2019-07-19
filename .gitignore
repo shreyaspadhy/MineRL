@@ -4,6 +4,8 @@ expt/
 # Ray and RLLlib
 ray/
 
+# Data
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
