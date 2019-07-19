@@ -4,6 +4,7 @@ from ray.rllib.agents import ppo
 from gym.spaces import Discrete, Box
 from env_wrappers import *
 import tensorflow as tf
+import os
 # Template of custom environment
 
 
@@ -57,11 +58,11 @@ import tensorflow as tf
 def main():
 
     args = {}
-    args.logging_level = 20
-    args.monitor = True
-    args.seed = 42
-    args.outdir = './output'
-    args.env = 'MineRLNavigateDense-v0'
+    args['logging_level'] = 20
+    args['monitor'] = True
+    args['seed'] = 42
+    args['outdir'] = './output'
+    args['env'] = 'MineRLNavigateDense-v0'
 
     os.makedirs(args.outdir, exist_ok=True)
 
