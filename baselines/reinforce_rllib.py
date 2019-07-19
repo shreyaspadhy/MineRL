@@ -162,3 +162,7 @@ def _main(args):
 
     while True:
         print(trainer.train())
+
+
+if __name__ == '__main__':
+    main()
