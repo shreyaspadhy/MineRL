@@ -1,18 +1,17 @@
 import os
 import gym
-import minerl
 import ray
 from ray.rllib.agents import ppo
 from gym.spaces import Discrete, Box
+from collections import OrderedDict
 import pdb
+
 import numpy as np
 import copy
 from gym.wrappers import Monitor
 from gym.wrappers.monitoring.stats_recorder import StatsRecorder
 import numpy as np
-
-
-ray.init()
+import minerl
 
 
 class MineRLEnv(gym.Env):
@@ -23,8 +22,10 @@ class MineRLEnv(gym.Env):
         args = env_config['args']
         assert 'env_name' in args
 
+        import minerl
         self.env = gym.make(args['env_name'])
-
+        pdb.set_trace()
+        self.spec = self.env.spec
         # Mimic POVWithCompass
 
         self._compass_angle_scale = 180
@@ -114,8 +115,11 @@ class MineRLEnv(gym.Env):
         n = len(self._actions)
         self.action_space = gym.spaces.Discrete(n)
 
-    # Replicates ResetTrimInfoWrapper
+    @property
+    def spec(self):
+        return self.env.spec
 
+    # Replicates ResetTrimInfoWrapper
     def reset(self, **kwargs):
         obs, info = self.env.reset(**kwargs)
         return self.observation(obs)
@@ -160,11 +164,13 @@ if __name__ == '__main__':
     args['seed'] = 42
     args['outdir'] = './output'
     args['env_name'] = 'MineRLNavigateDense-v0'
+
     os.makedirs(args['outdir'], exist_ok=True)
 
     train_seed = args['seed']  # noqa: never used in this script
     test_seed = 2 ** 31 - 1 - args['seed']
 
+    ray.init()
     trainer = ppo.PPOTrainer(
         env=MineRLEnv,
         config={
@@ -172,6 +178,12 @@ if __name__ == '__main__':
                 'args': args,
                 'test': False,
             },  # config to pass to env class
+            "model": {
+                "dim": 64,
+                "conv_filters": [[12, 64, 1]],
+            },
+            "num_workers": 0,
+            "num_cpus_per_worker": 0,
         })
 
     while True:
