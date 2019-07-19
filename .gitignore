@@ -1,9 +1,11 @@
 # Experiments - force add if desired.
 expt/
 
-# Ray and RLLlib
-ray/
+# Dataset
+data/
 
+# Ray and RLLlib
+# ray/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

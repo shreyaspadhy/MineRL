@@ -14,3 +14,10 @@ pip install ray[debug]
 
 git clone https://github.com/ray-project/ray
 cd ray/python/ray/rllib
+
+
+# 4: Download dataset
+Inside a Python terminal in MineRL repo
+import minerl
+DATA_DIR = 'data/'
+minerl.data.download(directory=DATA_DIR)
