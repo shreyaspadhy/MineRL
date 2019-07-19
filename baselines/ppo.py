@@ -25,7 +25,7 @@ class MineRLEnv(gym.Env):
         import minerl
         self.env = gym.make(args['env_name'])
         pdb.set_trace()
-        self.spec = self.env.spec
+
         # Mimic POVWithCompass
 
         self._compass_angle_scale = 180
@@ -68,7 +68,7 @@ class MineRLEnv(gym.Env):
             new_key, new_actions = combine_exclusive_actions(keys)
             self._maps[new_key] = new_actions
 
-        self.action_space = gym.spaces.Dict({
+        self.combined_action_space = gym.spaces.Dict({
             'forward_back':
                 gym.spaces.Discrete(len(self._maps['forward_back'])),
             'left_right':
@@ -84,7 +84,7 @@ class MineRLEnv(gym.Env):
         })
 
         # Serial DiscreteCombine
-        self.wrapping_action_space = self.action_space
+        self.wrapping_action_space = self.combined_action_space
 
         self.noop = OrderedDict([
             ('forward_back', 0),
@@ -113,7 +113,9 @@ class MineRLEnv(gym.Env):
                     self._actions.append(op)
 
         n = len(self._actions)
-        self.action_space = gym.spaces.Discrete(n)
+        self.serial_action_space = gym.spaces.Discrete(n)
+
+        self.action_space = self.serial_action_space
 
     @property
     def spec(self):
@@ -135,8 +137,8 @@ class MineRLEnv(gym.Env):
         return np.concatenate([pov, compass_channel], axis=-1)
 
     def action_combined(self, action):
-        if not self.action_space.contains(action):
-            raise ValueError('action {} is invalid for {}'.format(action, self.action_space))
+        if not self.combined_action_space.contains(action):
+            raise ValueError('action {} is invalid for {}'.format(action, self.combined_action_space))
 
         original_space_action = OrderedDict()
         for k, v in action.items():
@@ -149,8 +151,8 @@ class MineRLEnv(gym.Env):
         return original_space_action
 
     def action_serial(self, action):
-        if not self.action_space.contains(action):
-            raise ValueError('action {} is invalid for {}'.format(action, self.action_space))
+        if not self.serial_action_space.contains(action):
+            raise ValueError('action {} is invalid for {}'.format(action, self.serial_action_space))
 
         original_space_action = self._actions[action]
 
