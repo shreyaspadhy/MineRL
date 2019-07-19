@@ -11,6 +11,7 @@ class DotDict(dict):
     __delattr__ = dict.__delitem__
 
     def __init__(self, dct={}):
+        assert False, "Just use a normal dict man"
         for key, value in dct.items():
             if hasattr(value, 'keys'):
                 value = DotDict(value)

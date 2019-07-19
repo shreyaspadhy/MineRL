@@ -59,14 +59,14 @@ from utils import DotDict
 
 def main():
 
-    args = DotDict()
+    args = {}
     args['logging_level'] = 20
     args['monitor'] = True
     args['seed'] = 42
     args['outdir'] = './output'
     args['env'] = 'MineRLNavigateDense-v0'
 
-    os.makedirs(args.outdir, exist_ok=True)
+    os.makedirs(args['outdir'], exist_ok=True)
 
     # log_format = '%(levelname)-8s - %(asctime)s - [%(name)s %(funcName)s %(lineno)d] %(message)s'
     # logging.basicConfig(filename=os.path.join(args.outdir, 'log.txt'),
@@ -96,11 +96,12 @@ def _main(args):
     # Set a random seed used in ChainerRL.
 
     # Set different random seeds for train and test envs.
-    train_seed = args.seed  # noqa: never used in this script
-    test_seed = 2 ** 31 - 1 - args.seed
+    train_seed = args['seed']  # noqa: never used in this script
+    test_seed = 2 ** 31 - 1 - args['seed']
 
     # wrap_env converts MineRL dict space to discrete space
     def wrap_env(env, test):
+        raise Exception('Reimplemented inside WrappedEnv')
         # I believe this is because MineRL's environments do something weird
         # with time_limit
         # if isinstance(env, gym.wrappers.TimeLimit):
@@ -153,15 +154,43 @@ def _main(args):
         return env
 
     # Actually Create the environments
+    class WrappedEnv(gym.Env):
+        def __init__(self, env_config):
+            args = env_config['args']
+            test = env_config['test']
+            env = gym.make(args['env'])
+            # env = wrap_env(core_env, test=False)
+            env = ResetTrimInfoWrapper(env)
+            if env_config['test'] and args['monitor']:
+                env = ContinuingTimeLimitMonitor(
+                    env,
+                    os.path.join(args['outdir'], 'monitor'),
+                    mode='evaluation' if test else 'training',
+                    video_callable=lambda episode_id: True
+                )
+            if args['env'].startswith('MineRLNavigate'):
+                env = PoVWithCompassAngleWrapper(env)
+            else:
+                env = ObtainPoVWrapper(env)
+            env = CombineActionWrapper(env)
+            env = SerialDiscreteCombineActionWrapper(env)
 
-    core_env = gym.make(args.env)
-    env = wrap_env(core_env, test=False)
-    # eval_env = wrap_env(core_env, test=True)
+            env_seed = test_seed if test else train_seed
+            # env.seed(int(env_seed))  # TODO: not supported yet
+            self._env = env
+            self.__getattr__ = self._env.__getattr__
+            self.__setattr__ = self._env.__setattr__
+            self.__delattr__ = self._env.__delattr__
 
     ray.init()
-    trainer = ppo.PPOTrainer(env=env.env, config={
-        "env_config": {},  # config to pass to env class
-    })
+    trainer = ppo.PPOTrainer(
+        env=WrappedEnv,
+        config={
+            "env_config": {
+                'args': args,
+                'test': False,
+            },  # config to pass to env class
+        })
 
     while True:
         print(trainer.train())
