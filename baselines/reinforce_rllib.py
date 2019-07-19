@@ -5,6 +5,7 @@ from gym.spaces import Discrete, Box
 from env_wrappers import *
 import tensorflow as tf
 import os
+from utils import DotDict
 # Template of custom environment
 
 
@@ -57,7 +58,7 @@ import os
 
 def main():
 
-    args = {}
+    args = DotDict()
     args['logging_level'] = 20
     args['monitor'] = True
     args['seed'] = 42
