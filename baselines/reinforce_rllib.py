@@ -5,6 +5,7 @@ from gym.spaces import Discrete, Box
 from env_wrappers import *
 import tensorflow as tf
 import os
+import minerl
 from utils import DotDict
 # Template of custom environment
 
@@ -102,11 +103,11 @@ def _main(args):
     def wrap_env(env, test):
         # I believe this is because MineRL's environments do something weird
         # with time_limit
-        if isinstance(env, gym.wrappers.TimeLimit):
-            logger.info('Detected `gym.wrappers.TimeLimit`! Unwrap it and re-wrap our own time limit.')
-            env = env.env
-            max_episode_steps = env.spec.max_episode_steps
-            env = ContinuingTimeLimit(env, max_episode_steps=max_episode_steps)
+        # if isinstance(env, gym.wrappers.TimeLimit):
+        #     logger.info('Detected `gym.wrappers.TimeLimit`! Unwrap it and re-wrap our own time limit.')
+        #     env = env.env
+        #     max_episode_steps = env.spec.max_episode_steps
+        #     env = ContinuingTimeLimit(env, max_episode_steps=max_episode_steps)
 
         # Changes MineRL reset() return of (obs, info) to (obs) only
         env = ResetTrimInfoWrapper(env)
@@ -158,7 +159,7 @@ def _main(args):
     # eval_env = wrap_env(core_env, test=True)
 
     ray.init()
-    trainer = ppo.PPOTrainer(env=env, config={
+    trainer = ppo.PPOTrainer(env=env.env, config={
         "env_config": {},  # config to pass to env class
     })
 
