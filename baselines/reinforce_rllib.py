@@ -55,7 +55,7 @@ import tensorflow as tf
 #         """
 
 def main():
-    print(tf.__version__())
+
     args = {}
     args.logging_level = 20
     args.monitor = True
