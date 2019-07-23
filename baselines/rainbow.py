@@ -42,10 +42,11 @@ class MineRLEnv(gym.Env):
         self.observation_space = gym.spaces.Box(low=low, high=high)
 
         orig_obs_space = self.observation_space
-        low = np.repeat(orig_obs_space.low, k, axis=self._stack_axis)
-        high = np.repeat(orig_obs_space.high, k, axis=self._stack_axis)
-        self.observation_space = spaces.Box(
-            low=low, high=high, dtype=orig_obs_space.dtype)
+        low = np.repeat(orig_obs_space.low, self._stack, axis=self._stack_axis)
+        high = np.repeat(orig_obs_space.high, self._stack, axis=self._stack_axis)
+        self.observation_space = Box(
+            low=low, high=high, dtype=orig_obs_space.dtype
+        )
 
         # Mimic CombineActionSpace
         self.wrapping_action_space = self.env.action_space
@@ -220,7 +221,6 @@ if __name__ == '__main__':
             "gamma": 0.99,
             "train_batch_size": 32,
             "sample_batch_size": 32,
-            "use_huber": True,
             "evaluation_config": {
                 "exploration_fraction": 0,
                 "exploration_final_eps": 0,
