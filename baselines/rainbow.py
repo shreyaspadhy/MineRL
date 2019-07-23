@@ -26,9 +26,11 @@ class MineRLEnv(gym.Env):
         import minerl
         self.env = gym.make(args['env_name'])
 
-        # Mimic POVWithCompass
-
+        # Mimic FrameSkip -> POVWithCompass -> FrameStack
         self._compass_angle_scale = 180
+        self._skip = 4
+        self._stack = 4
+        self._stack_axis = -1
 
         pov_space = self.env.observation_space.spaces['pov']
         compass_angle_space = self.env.observation_space.spaces['compassAngle']
@@ -38,6 +40,12 @@ class MineRLEnv(gym.Env):
         high = self.observation({'pov': pov_space.high, 'compassAngle': compass_angle_space.high})
 
         self.observation_space = gym.spaces.Box(low=low, high=high)
+
+        orig_obs_space = self.observation_space
+        low = np.repeat(orig_obs_space.low, k, axis=self._stack_axis)
+        high = np.repeat(orig_obs_space.high, k, axis=self._stack_axis)
+        self.observation_space = spaces.Box(
+            low=low, high=high, dtype=orig_obs_space.dtype)
 
         # Mimic CombineActionSpace
         self.wrapping_action_space = self.env.action_space
@@ -83,7 +91,7 @@ class MineRLEnv(gym.Env):
                 gym.spaces.Discrete(len(self._maps['attack_place_equip_craft_nearbyCraft_nearbySmelt']))
         })
 
-        # Serial DiscreteCombine
+        # Mimic Serial DiscreteCombine
         self.wrapping_action_space = self.combined_action_space
 
         self.noop = OrderedDict([
@@ -123,12 +131,28 @@ class MineRLEnv(gym.Env):
 
     # Replicates ResetTrimInfoWrapper
     def reset(self, **kwargs):
+        frames = []
         obs, info = self.env.reset(**kwargs)
-        return self.observation(obs)
+        for _ in range(self._stack):
+            frames.append(self.observation(obs))
+
+        obs = np.concatenate(frames, axis=self._stack_axis)
+        return obs
 
     def step(self, action):
-        obs, rew, done, info = self.env.step(self.action_combined(self.action_serial(action)))
-        return self.observation(obs), rew, done, info
+        frames = []
+        total_rew = 0.0
+        for _ in range(self._stack):
+            for _ in range(self._skip):
+                obs, rew, done, info = self.env.step(self.action_combined(self.action_serial(action)))
+                total_rew += rew
+                if done:
+                    break
+
+            frames.append(self.observation(obs))
+
+        obs = np.concatenate(frames, axis=self._stack_axis)
+        return obs, total_rew, done, info
 
     def observation(self, observation):
         pov = observation['pov']
@@ -173,9 +197,34 @@ if __name__ == '__main__':
     test_seed = 2 ** 31 - 1 - args['seed']
 
     ray.init()
+    # TODO: --replay-start-size 5000
+    # minibatch_size 32
+    #  --frame-stack 4 --frame-skip 4
+    # --batch-accumulator mean
+    # --prioritized = prioritized_replay_alpha, prioritized_replay_beta
+    # TODO: clip_delta = use_huber???
+    # TODO: def soft_copy_param(target_link, source_link, tau)??
+    # target_update_method and tau
+
     trainer = dqn.DQNTrainer(
         env=MineRLEnv,
         config={
+            "noisy": True,
+            "buffer_size": 300000,
+            "target_network_update_freq": 10000,
+            "n_step": 10,
+            "lr": 0.0000625,
+            "adam_epsilon": 0.00015,
+            "prioritized_replay_alpha": 0.6,
+            "num_atoms": 51,
+            "gamma": 0.99,
+            "train_batch_size": 32,
+            "sample_batch_size": 32,
+            "use_huber": True,
+            "evaluation_config": {
+                "exploration_fraction": 0,
+                "exploration_final_eps": 0,
+            },
             "env_config": {
                 'args': args,
                 'test': False,
