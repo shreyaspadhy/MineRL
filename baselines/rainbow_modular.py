@@ -32,7 +32,7 @@ register_env(env_name,
 
 
 ray.init()
-# TODO: --replay-start-size 5000
+# TODO: --replay-start-size 5000 (replay_starts)
 # minibatch_size 32
 #  --frame-stack 4 --frame-skip 4
 # --batch-accumulator mean
@@ -45,7 +45,7 @@ trainer = dqn.DQNTrainer(
     env=env_name,
     config={
         "noisy": True,
-        "buffer_size": 300000,
+        "buffer_size": 11,
         "target_network_update_freq": 10000,
         "n_step": 10,
         "lr": 0.0000625,
@@ -53,8 +53,8 @@ trainer = dqn.DQNTrainer(
         "prioritized_replay_alpha": 0.6,
         "num_atoms": 51,
         "gamma": 0.99,
-        "train_batch_size": 32,
-        "sample_batch_size": 32,
+        "train_batch_size": 11,
+        "sample_batch_size": 11,
         "evaluation_config": {
             "exploration_fraction": 0,
             "exploration_final_eps": 0,
@@ -73,3 +73,5 @@ trainer = dqn.DQNTrainer(
 
 while True:
     print(trainer.train())
+    import pdb
+    pdb.set_trace()  # noqa
