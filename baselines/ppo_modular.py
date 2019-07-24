@@ -12,7 +12,10 @@ from gym.wrappers import Monitor
 from gym.wrappers.monitoring.stats_recorder import StatsRecorder
 from ray.rllib.agents import ppo
 from ray.tune.registry import register_env
-from env_wrappers import *
+from env_wrappers import (ResetTrimInfoWrapper, FrameSkip,
+                          GrayScaleWrapper, PoVWithCompassAngleWrapper,
+                          ObtainPoVWrapper, CombineActionWrapper,
+                          erialDiscreteCombineActionWrapper)
 
 
 def make_minerl_env(env_name, args):
