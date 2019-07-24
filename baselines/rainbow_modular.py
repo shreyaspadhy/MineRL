@@ -10,9 +10,10 @@ import ray
 from gym.spaces import Box, Discrete
 from gym.wrappers import Monitor
 from gym.wrappers.monitoring.stats_recorder import StatsRecorder
-from ray.rllib.agents import ppo
+from ray.rllib.agents import dqn
 from ray.tune.registry import register_env
 from utils import make_minerl_env
+
 
 env_name = 'MineRLNavigateDense-v0'
 
@@ -29,15 +30,35 @@ args['outdir'] = './output'
 register_env(env_name,
              lambda config: make_minerl_env(env_name, args))
 
-os.makedirs(args['outdir'], exist_ok=True)
-
-train_seed = args['seed']  # noqa: never used in this script
-test_seed = 2 ** 31 - 1 - args['seed']
 
 ray.init()
-trainer = ppo.PPOTrainer(
+# TODO: --replay-start-size 5000
+# minibatch_size 32
+#  --frame-stack 4 --frame-skip 4
+# --batch-accumulator mean
+# --prioritized = prioritized_replay_alpha, prioritized_replay_beta
+# TODO: clip_delta = use_huber???
+# TODO: def soft_copy_param(target_link, source_link, tau)??
+# target_update_method and tau
+
+trainer = dqn.DQNTrainer(
     env=env_name,
     config={
+        "noisy": True,
+        "buffer_size": 300000,
+        "target_network_update_freq": 10000,
+        "n_step": 10,
+        "lr": 0.0000625,
+        "adam_epsilon": 0.00015,
+        "prioritized_replay_alpha": 0.6,
+        "num_atoms": 51,
+        "gamma": 0.99,
+        "train_batch_size": 32,
+        "sample_batch_size": 32,
+        "evaluation_config": {
+            "exploration_fraction": 0,
+            "exploration_final_eps": 0,
+        },
         "env_config": {
             'args': args,
             'test': False,
